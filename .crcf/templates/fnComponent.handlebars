@@ -1,0 +1,32 @@
+{{#if typescript}}
+import React from 'react';
+{{else}}
+import React from 'react';
+{{/if}}
+{{#if proptypes}}
+  import PropTypes from 'prop-types';
+{{/if}}
+
+{{#if typescript}}
+export type {{ name }}Props = {
+  //
+};
+{{/if}}
+
+{{#if export }}export {{/if}}const {{ name }} = () => {
+  return (
+    <div>{{name}}</div>
+  );
+};
+
+{{#if proptypes~}}
+{{ name }}.propTypes = {
+  //
+};
+{{#unless export}}
+
+{{/unless}}
+{{/if}}
+{{#unless export }}
+export default {{ name }};
+{{/unless}}

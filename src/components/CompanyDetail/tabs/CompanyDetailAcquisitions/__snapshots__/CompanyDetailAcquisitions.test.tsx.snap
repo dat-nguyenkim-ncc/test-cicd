@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CompanyDetailBusiness matches snapshot 1`] = `ShallowWrapper {}`;

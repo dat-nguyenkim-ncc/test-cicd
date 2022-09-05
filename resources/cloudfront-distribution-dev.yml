@@ -1,0 +1,89 @@
+Resources:
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - S3OriginAccessIdentity
+    Properties:
+      Tags:
+        - Key: Environment
+          Value: ${self:custom.stage}
+        - Key: CostCenter
+          Value: ${opt:costCenter,'12751-21'}
+        - Key: Owner
+          Value: pauline.wray@expandresearch.com
+        - Key: TechnicalOwner
+          Value: luke.budesha@expandresearch.com
+        - Key: Service
+          Value: AWS-ABM-ftct-dashboard-fe-${self:custom.stage}
+        - Key: Application
+          Value: ftct-dataPlatform-dashboard
+      DistributionConfig:
+        Enabled: true
+        PriceClass: PriceClass_100
+        Aliases:
+          - ${self:custom.domainName}
+        ViewerCertificate:
+          AcmCertificateArn: arn:aws:acm:us-east-1:510656726199:certificate/da6ca1b8-a8b1-46c8-844d-29489a216a91
+          SslSupportMethod: sni-only
+        HttpVersion: http2
+        IPV6Enabled: true
+        Origins:
+          - DomainName: ftct-dashboard-fe-${self:custom.stage}.s3-website-us-east-1.amazonaws.com
+            OriginPath: ""
+            Id: S3Origin
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          DefaultTTL: 0
+          MaxTTL: 0
+          MinTTL: 0
+          ForwardedValues:
+            QueryString: "true"
+            Cookies:
+              Forward: none
+          AllowedMethods:
+            - DELETE
+            - GET
+            - HEAD
+            - OPTIONS
+            - PATCH
+            - POST
+            - PUT
+        CacheBehaviors:
+          - TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MaxTTL: 0
+            MinTTL: 0
+            ForwardedValues:
+              QueryString: "false"
+              Cookies:
+                Forward: none
+            PathPattern: "url"
+            AllowedMethods:
+              - GET
+              - HEAD
+          - TargetOriginId: S3Origin
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MaxTTL: 0
+            MinTTL: 0
+            ForwardedValues:
+              QueryString: "false"
+              Cookies:
+                Forward: none
+              Headers:
+                - Origin
+                - Access-Control-Request-Headers
+                - Access-Control-Request-Method
+            PathPattern: "static/*"
+            AllowedMethods:
+              - GET
+              - HEAD
+  S3OriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: Cloudfront Origin Access for assets bucket

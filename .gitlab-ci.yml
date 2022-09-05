@@ -1,0 +1,74 @@
+image: $CI_REGISTRY/fintech-control-tower/gitlab-runner/docker:19.03.12
+services:
+  - name: $CI_REGISTRY/fintech-control-tower/gitlab-runner/docker:19.03.12-dind
+    alias: docker
+
+variables:
+  BUILD_IMAGE: frontend
+
+stages:
+  - deploy
+
+Deploy_Dev:
+  stage: deploy
+  only:
+    - master
+  resource_group: frontendDev
+  except:
+    - schedules
+  tags:
+    - aws
+    - private
+    - bill
+  before_script:
+    - docker login $CI_REGISTRY -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+    - docker build --build-arg Environment=qa -t ${BUILD_IMAGE} .
+  script:
+    - |
+      docker run --rm \
+        -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e  AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+        ${BUILD_IMAGE} \
+        /bin/sh -c "aws s3 sync build s3://${DEV_BUCKET} --delete && node scripts/set_policy.js dev"
+
+
+Deploy_Staging:
+  stage: deploy
+  only:
+    - staging
+  resource_group: frontendStaging
+  except:
+    - schedules
+  tags:
+    - aws
+    - private
+    - bill
+  before_script:
+    - docker login $CI_REGISTRY -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+    - docker build --build-arg Environment=staging -t ${BUILD_IMAGE} .
+  script:
+    - |
+      docker run --rm \
+        -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e  AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+        ${BUILD_IMAGE} \
+         /bin/sh -c "aws s3 sync build s3://${STAGING_BUCKET}  --delete "
+
+Deploy_Prod:
+  stage: deploy
+  only:
+    - prod
+  resource_group: frontendProd
+  except:
+    - schedules
+  tags:
+    - aws
+    - private
+    - bill
+  before_script:
+    - docker login $CI_REGISTRY -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+    - docker build --build-arg Environment=prod -t ${BUILD_IMAGE} .
+  script:
+    - |
+      docker run --rm \
+        -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID_PROD} -e  AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_PROD} \
+        ${BUILD_IMAGE} \
+        /bin/sh -c "aws s3 sync build s3://${PROD_BUCKET} --delete && node scripts/set_policy_prod.js prod"
